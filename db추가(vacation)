@@ -1,0 +1,9 @@
+create table vacation(
+member_id number constraint vacation_member_fk references member(member_id),
+document_num number constraint vacation_document_fk references document(document_num),
+start_day date not null,
+end_day date not null,
+sum_days number not null,
+vacation_type varchar2(10) not null,
+constraint vacation_pk primary key(member_id, document_num)
+);

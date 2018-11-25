@@ -1,0 +1,250 @@
+create user pigeon
+identified by pigeon
+
+grant resource, connect to pigeon
+
+alter user pigeon identified by pigeon account unlock;
+
+create table document_form(
+document_kind number constraint document_form_pk primary key,
+document_contents CLOB not null
+);
+
+create table dept(
+dept_num number constraint dept_num_pk primary key,
+dept_name varchar2(60) not null,
+dept_upside number not null,
+dept_info varchar2(600),
+dept_to number not null
+);
+
+create table document(
+document_num number constraint document_num_pk primary key,
+write_date date not null,
+write_dept number constraint document_write_dept_fk references dept(dept_num),
+writer number not null,
+destination number,
+title varchar2(150) not null,
+contents CLOB not null,
+document_kind number,
+condition number default 0
+);
+
+create table document_comment(
+document_num number constraint comment_document_num_fk references document(document_num),
+remark_seq number not null,
+remark_contents varchar2(1500) not null,
+remark_writer number not null,
+remark_date date not null,
+constraint comment_pk primary key(document_num, remark_seq)
+);
+
+create table sign(
+document_num number constraint sign_document_num_fk references document(document_num),
+kind_sign number not null,
+seq_sign number not null,
+member_id number not null,
+check_sign varchar2(1) default 'n',
+insert_date date not null,
+constraint sign_pk primary key(document_num, kind_sign, seq_sign)
+);
+
+create table bank(
+bank_num number constraint bank_num_pk primary key,
+bank_name varchar2(30) not null
+);
+
+create table rank(
+rank_num number constraint rank_num_pk primary key,
+rank_name varchar2(30) not null
+);
+
+create table member(
+member_id number constraint member_id_pk primary key,
+member_name varchar2(30) not null,
+member_password varchar2(60) not null,
+member_photo varchar2(60),
+member_addr varchar2(300),
+member_phone varchar2(11) not null,
+member_bank number constraint member_bank_fk references bank(bank_num),
+member_acc varchar(30) not null,
+dept_num number constraint member_dept_num_fk references dept(dept_num),
+rank_num number constraint member_rank_num_fk references rank(rank_num),
+member_sal number not null,
+member_vacation number not null,
+join_date date not null,
+out_date date,
+member_sign varchar2(300) not null
+);
+
+create table receive_reference(
+document_num number constraint receive_document_num_fk references document(document_num),
+member_id number not null,
+constraint receive_reference_pk primary key(document_num, member_id)
+);
+
+create table calendar(
+calendar_id number constraint calendar_pk primary key,
+calendar_name varchar2(30) not null,
+calendar_contents varchar2(300) not null,
+calendar_start date not null,
+calendar_end date not null,
+calendar_share number not null,
+calendar_writer number not null
+);
+
+create table resources(
+resource_id number not null,
+resource_dept number constraint resource_dept_fk references dept(dept_num),
+resource_name varchar2(60) not null,
+resource_contents CLOB,
+resource_count number not null,
+resource_use number not null,
+constraint resources_pk primary key(resource_id)
+);
+
+create table board(
+board_seq number constraint board_pk primary key,
+board_title varchar2(100) not null,
+board_contents CLOB not null,
+writer_id number not null,
+write_date date not null
+);
+
+create table QA(
+qa_num number constraint QA_pk primary key,
+qa_title varchar2(100) not null,
+qa_contents CLOB not null,
+qa_writer number not null,
+qa_date date not null,
+qa_end date not null,
+stat number
+);
+
+create table question(
+qa_num number constraint question_fk references QA(qa_num),
+q_seq number not null,
+q_title varchar2(100) not null,
+q_type varchar2(1) not null,
+count number,
+constraint qeustion_pk primary key(qa_num, q_seq)
+);
+
+create table question_detail(
+qa_num number constraint question_detail_fk references QA(qa_num),
+q_seq number not null,
+q_content varchar2(300) not null,
+s_seq number,
+constraint question_detail_pk primary key(qa_num, q_seq, s_seq)
+);
+
+create table answer(
+qa_num number constraint answer_fk references QA(qa_num),
+member_id number not null,
+a_seq number not null,
+a_contents varchar2(300) not null,
+insert_date date not null,
+constraint answer_pk primary key(qa_num, member_id, a_seq)
+);
+
+create table research(
+    qa_num number not null,
+    q_seq number not null,
+    a_contents varchar2(300) not null,
+    result number not null,
+    s_seq number    
+);
+    
+create table work(
+member_id number constraint work_fk references member(member_id),
+work_date date not null,
+work_start_time date,
+work_end_time date,
+work_kind varchar2(20) not null,
+constraint work_pk primary key(member_id, work_date)
+);
+
+create table history(
+member_id number constraint history_fk references member(member_id),
+history_seq number not null,
+history_contents varchar2(300) not null,
+history_writer number not null,
+history_date date not null,
+constraint history_pk primary key(member_id, history_seq)
+);
+
+create table message (
+message_id number constraint message_pk primary key,
+sender number not null,
+receiver number not null,
+title varchar2(100) not null,
+contents CLOB not null,
+send_time date,
+read_time date,
+read_check varchar2(2)
+);
+
+CREATE TABLE public_calendar (
+	public_id		number(8),
+	lv_id		number(3),
+	cat_id		number(3),
+	dept_num		number(3),
+	pubcal_content	varchar2(100),
+	pubcal_start	date,
+	pubcal_end	date,
+	member_id	number(10),
+	admin_id		number(10),
+	
+	CONSTRAINT public_calendar_public_id_pk	PRIMARY KEY (public_id),
+	CONSTRAINT public_calendar_lv_id_fk		FOREIGN KEY (lv_id)	REFERENCES cal_lv (lv_id),
+	CONSTRAINT public_calendar_cat_id_fk		FOREIGN KEY (cat_id)	REFERENCES cal_cat (cat_id),
+	CONSTRAINT public_calendar_dept_num_fk	FOREIGN KEY (dept_num)	REFERENCES dept (dept_num),
+	CONSTRAINT public_calendar_member_id_fk	FOREIGN KEY (member_id)	REFERENCES member (member_id),
+	CONSTRAINT public_calendar_admin_id_fk	FOREIGN KEY (admin_id)	REFERENCES member (member_id)
+);
+-- calendar 준수
+CREATE TABLE cal_lv (
+	lv_id	number(3),
+	lv_name	varchar2(20),
+	
+	CONSTRAINT cal_lv_lv_id_pk	PRIMARY KEY (lv_id)
+);
+
+CREATE TABLE cal_cat (
+	cat_id	number(3),
+	cat_name	varchar2(20),
+	CONSTRAINT cal_cat_cat_id_pk	PRIMARY KEY (cat_id)
+);
+
+CREATE TABLE private_calendar (
+	prical_id number(8),
+	member_id number(10),
+	prical_content varchar2(100),
+	prical_start date,
+	prical_end date,
+	color varchar2(8),
+	CONSTRAINT private_calendar_prical_id_pk PRIMARY KEY (prical_id),
+	CONSTRAINT private_calendar_member_id_fk FOREIGN KEY (member_id)	REFERENCES member (member_id)
+);
+
+INSERT INTO cal_lv VALUES (1, '전사');
+INSERT INTO cal_lv VALUES (2, '부서');
+INSERT INTO cal_lv VALUES (3, '개인');
+
+INSERT INTO cal_cat VALUES (1,'육아');
+INSERT INTO cal_cat VALUES (2,'병가');
+INSERT INTO cal_cat VALUES (3,'출산');
+INSERT INTO cal_cat VALUES (4,'연차');
+INSERT INTO cal_cat VALUES (5,'월차');
+INSERT INTO cal_cat VALUES (6,'경조사');
+INSERT INTO cal_cat VALUES (7, '휴일');
+INSERT INTO cal_cat VALUES (8, '행사');
+INSERT INTO cal_cat VALUES (9, '출장');
+INSERT INTO cal_cat VALUES (10, '휴가');
+INSERT INTO cal_cat VALUES (11, '워크샵');
+
+CREATE SEQUENCE public_calendar_seq
+START WITH 1
+INCREMENT BY 1
+NOMAXVALUE
+NOMINVALUE
